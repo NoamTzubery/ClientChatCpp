@@ -71,7 +71,7 @@ void Client::SendMessageThread() {
         if (message == "exit") {
             break;
         }
-        if (sizeof(message) > UINT_MAX) {
+        if (message.length() > UINT_MAX) {
             std::cout << "message too long\n";
         }
         else {

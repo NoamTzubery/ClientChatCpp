@@ -13,7 +13,7 @@
 #pragma comment(lib, "Ws2_32.lib")
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 constexpr int PORT = 12345;   ///< Port number for connecting to the server.
-constexpr int BUFFER = 1024;  ///< Buffer size for sending and receiving messages.
+constexpr int BUFFER = 4025;  ///< Buffer size for sending and receiving messages.
 
 /**
  * @class Client
@@ -98,6 +98,8 @@ public:
 private:
     SOCKET _client_fd;          ///< File descriptor for the client socket.
     sockaddr_in _serverAddr;    ///< Address structure for the server.
+    static constexpr int PORT = 12345;   ///< Port number for connecting to the server.
+    static constexpr int BUFFER = 4025;  ///< Buffer size for sending and receiving messages.
 };
 
 #endif // CLIENT_HPP
