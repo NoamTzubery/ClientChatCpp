@@ -100,6 +100,33 @@ private:
     sockaddr_in _serverAddr;    ///< Address structure for the server.
     static constexpr int PORT = 12345;   ///< Port number for connecting to the server.
     static constexpr int BUFFER = 4025;  ///< Buffer size for sending and receiving messages.
+    static constexpr char SEPARATER = '$';
+    static constexpr int TIME_VIEW_SIZE = 2;
+    /**
+     * @brief Parses the message size from the received buffer.
+     *
+    * @param buffer The buffer containing the message data.
+    * @return The size of the message.
+    */
+    uint32_t parseSize(const char* buffer);
+
+    /**
+     * @brief Parses the hours and minutes from the received time string.
+     *
+     * @param timeStr The time string in the format "HH:MM".
+     * @param hours Reference to store the parsed hours.
+     * @param minutes Reference to store the parsed minutes.
+     */
+    void parseTime(const char* timeStr, uint32_t& hours, uint32_t& minutes);
+
+    /**
+     * @brief Parses the message content from the received buffer.
+     *
+     * @param messageStart The start of the message content in the buffer.
+     * @param msgSize The size of the message content.
+     * @return The parsed message content as a string.
+     */
+    std::string parseMessage(const char* messageStart, uint32_t msgSize);
 };
 
 #endif // CLIENT_HPP

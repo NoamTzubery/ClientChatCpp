@@ -1,6 +1,10 @@
 #include "client.hpp"
 #include <string>
 #include <thread>
+#include <cstdint>
+#include <iomanip>
+
+
 
 
 Client::Client() {
@@ -80,52 +84,55 @@ void Client::SendMessageThread() {
     }
 }
 
+uint32_t Client::parseSize(const char* buffer) {
+    std::string bufferStr(buffer);
+    size_t pos = bufferStr.find(SEPARATER);
+    if (pos == std::string::npos) {
+        std::cerr << "Failed to parse message size" << std::endl;
+        return 0;
+    }
+    return static_cast<uint32_t>(std::stoul(bufferStr.substr(0, pos)));
+}
+
+void Client::parseTime(const char* timeStr, uint32_t& hours, uint32_t& minutes) {
+    std::string timeStrStd(timeStr);
+    size_t pos = timeStrStd.find(':');
+    if (pos == std::string::npos) {
+        std::cerr << "Failed to parse message hours" << std::endl;
+        return;
+    }
+    hours = static_cast<uint32_t>(std::stoul(timeStrStd.substr(0, pos)));
+    minutes = static_cast<uint32_t>(std::stoul(timeStrStd.substr(pos + 1)));
+}
+
+std::string Client::parseMessage(const char* messageStart, uint32_t msgSize) {
+    return std::string(messageStart, msgSize);
+}
 
 void Client::ReceiveMessagesThread() {
     char buffer[BUFFER];
     int bytesReceived;
 
     while (true) {
-        // Initialize buffer to store the incoming data
         memset(buffer, 0, BUFFER);
         bytesReceived = recv(_client_fd, buffer, BUFFER, 0);
 
         if (bytesReceived > 0) {
-            // Parse the size (up until the first '$')
-            char* sizeEnd = strchr(buffer, '$');
-            if (sizeEnd == nullptr) {
-                std::cerr << "Failed to parse message size" << std::endl;
-                continue;
-            }
-            *sizeEnd = '\0';
-            uint32_t msgSize = static_cast<uint32_t>(std::stoul(buffer));
+            uint32_t msgSize = parseSize(buffer);
+            if (msgSize == 0) continue;
 
-            // Parse the hours (up until the ':')
-            char* hoursStart = sizeEnd + 1;
-            char* hoursEnd = strchr(hoursStart, ':');
-            if (hoursEnd == nullptr) {
-                std::cerr << "Failed to parse message hours" << std::endl;
-                continue;
-            }
-            *hoursEnd = '\0';
-            uint32_t msgHours = static_cast<uint32_t>(std::stoul(hoursStart));
+            std::string bufferStr(buffer);
+            size_t timePos = bufferStr.find(SEPARATER) + 1;
+            std::string timeStr = bufferStr.substr(timePos);
+            uint32_t msgHours, msgMinutes;
+            parseTime(timeStr.c_str(), msgHours, msgMinutes);
 
-            // Parse the minutes (up until the second '$')
-            char* minutesStart = hoursEnd + 1;
-            char* minutesEnd = strchr(minutesStart, '$');
-            if (minutesEnd == nullptr) {
-                std::cerr << "Failed to parse message minutes" << std::endl;
-                continue;
-            }
-            *minutesEnd = '\0';
-            uint32_t msgMinutes = static_cast<uint32_t>(std::stoul(minutesStart));
+            size_t messagePos = timeStr.find(SEPARATER) + 1;
+            std::string message = parseMessage(timeStr.c_str() + messagePos, msgSize);
 
-            // Parse the message content
-            char* messageStart = minutesEnd + 1;
-            std::string message(messageStart, msgSize);
-
-            // Print the received message
-            std::cout << "[" << msgHours << ":" << msgMinutes << "]: " << message << std::endl;
+            std::cout << "[" << std::setfill('0') << std::setw(TIME_VIEW_SIZE) << msgHours
+                << ":" << std::setfill('0') << std::setw(TIME_VIEW_SIZE) << msgMinutes
+                << "]: " << message << std::endl;
         }
         else if (bytesReceived == 0) {
             std::cout << "Connection closed by the server." << std::endl;
