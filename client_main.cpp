@@ -2,11 +2,6 @@
 
 int main() {
     Client client;
-
-    client.InitializeWinsock();
-    client.CreateSocket();
-    client.ConnectToServer("127.0.0.1");     
-    client.Run();
-
+    client.start(CONNECTION_IP);
     return 0;
 }

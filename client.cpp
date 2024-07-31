@@ -4,20 +4,16 @@
 #include <cstdint>
 #include <iomanip>
 
-
-
-
-Client::Client() {
-}
+Client::Client() {}
 
 Client::~Client() {
     closesocket(_client_fd);
     WSACleanup();
 }
 
-void Client::InitializeWinsock() {
+void Client::initializeWinsock() {
     WSADATA ws;
-    if (WSAStartup(MAKEWORD(2, 2), &ws) == -1) {
+    if (WSAStartup(MAKEWORD(2, 2), &ws) == FAILED) {
         std::cout << "WSA Failed to Initialize\n";
         exit(1);
     }
@@ -26,7 +22,7 @@ void Client::InitializeWinsock() {
     }
 }
 
-void Client::CreateSocket() {
+void Client::createSocket() {
     _client_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (_client_fd == INVALID_SOCKET) {
         std::cout << "Failed to create socket\n";
@@ -38,7 +34,7 @@ void Client::CreateSocket() {
     }
 }
 
-void Client::ConnectToServer(const char* serverAddress) {
+void Client::connectToServer(const char* serverAddress) {
     _serverAddr.sin_family = AF_INET;
     _serverAddr.sin_port = htons(PORT);
     inet_pton(AF_INET, serverAddress, &_serverAddr.sin_addr);
@@ -55,7 +51,7 @@ void Client::ConnectToServer(const char* serverAddress) {
     }
 }
 
-void Client::SendMessage(const char* message) {
+void Client::sendMessage(const char* message) {
     int sendResult = send(_client_fd, message, strlen(message), 0);
     if (sendResult == SOCKET_ERROR) {
         std::cout << "Failed to send message\n";
@@ -68,7 +64,7 @@ void Client::SendMessage(const char* message) {
     }
 }
 
-void Client::SendMessageThread() {
+void Client::sendMessageThread() {
     std::string message;
     while (true) {
         std::getline(std::cin, message);
@@ -76,10 +72,10 @@ void Client::SendMessageThread() {
             break;
         }
         if (message.length() > UINT_MAX) {
-            std::cout << "message too long\n";
+            std::cout << "Message too long\n";
         }
         else {
-            SendMessage(message.c_str());
+            sendMessage(message.c_str());
         }
     }
 }
@@ -109,7 +105,7 @@ std::string Client::parseMessage(const char* messageStart, uint32_t msgSize) {
     return std::string(messageStart, msgSize);
 }
 
-void Client::ReceiveMessagesThread() {
+void Client::receiveMessagesThread() {
     char buffer[BUFFER];
     int bytesReceived;
 
@@ -144,10 +140,18 @@ void Client::ReceiveMessagesThread() {
         }
     }
 }
-void Client::Run() {
-    std::thread sendThread(&Client::SendMessageThread, this);
-    std::thread receiveThread(&Client::ReceiveMessagesThread, this);
+
+void Client::run() {
+    std::thread sendThread(&Client::sendMessageThread, this);
+    std::thread receiveThread(&Client::receiveMessagesThread, this);
 
     sendThread.join();
     receiveThread.join();
+}
+
+void Client::start(const char* serverIp) {
+    initializeWinsock();
+    createSocket();
+    connectToServer(serverIp);
+    run();
 }
