@@ -1,7 +1,15 @@
 #include "client.hpp"
+#include <stdexcept>
 
 int main() {
-    Client client;
-    client.start(CONNECTION_IP);
-    return 0;
+    try {
+        Client client;
+        client.start(CONNECTION_IP);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
