@@ -1,12 +1,15 @@
 #include "client.hpp"
+#include <stdexcept>
 
 int main() {
-    Client client;
+    try {
+        Client client;
+        client.start(CONNECTION_IP);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    client.InitializeWinsock();
-    client.CreateSocket();
-    client.ConnectToServer("127.0.0.1");     
-    client.Run();
-
-    return 0;
+    return EXIT_SUCCESS;
 }
